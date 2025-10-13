@@ -1,0 +1,89 @@
+@startuml PatientDomain
+' Диаграмма классов — Пациент (Clinic domain)
+' Требования: >=4 классов, иерархии, свойства и методы, связи
+
+skinparam classAttributeIconSize 0
+package "Clinic Domain" {
+  abstract class Person {
+    - id: String
+    - firstName: String
+    - lastName: String
+    - birthDate: Date
+    + getFullName(): String
+    + getAge(): int
+  }
+
+  class Patient extends Person {
+    - medicalRecordNumber: String
+    - primaryPhysicianId: String
+    - bloodType: String
+    - allergies: List<String>
+    + addAllergy(a: String): void
+    + removeAllergy(a: String): void
+    + getActiveMedications(): List<Medication>
+  }
+
+  class Staff extends Person {
+    - staffId: String
+    - role: StaffRole
+    + assignToPatient(p: Patient): void
+  }
+
+  enum StaffRole {
+    DOCTOR
+    NURSE
+    ADMIN
+    TECH
+  }
+
+  class ContactInfo {
+    - phone: String
+    - email: String
+    - address: Address
+    + validateEmail(): boolean
+    + normalizePhone(): String
+  }
+
+  class Address {
+    - street: String
+    - city: String
+    - postalCode: String
+    - country: String
+    + toString(): String
+  }
+
+  class Visit {
+    - visitId: String
+    - date: DateTime
+    - reason: String
+    - notes: String
+    + addNote(note: String): void
+    + closeVisit(): void
+  }
+
+  class Medication {
+    - medId: String
+    - name: String
+    - dosage: String
+    - startDate: Date
+    - endDate: Date
+    + isActive(today: Date): boolean
+  }
+
+  class Diagnosis {
+    - code: String
+    - description: String
+    + isChronic(): boolean
+  }
+
+  ' связи
+  Patient "1" *-- "0..1" ContactInfo : contact >
+  ContactInfo o-- Address
+  Patient "1" -- "0..*" Visit : visits >
+  Visit "0..*" o-- "0..*" Staff : attendedBy >
+  Visit "0..*" -- "0..*" Diagnosis : diagnoses >
+  Patient "1" o-- "0..*" Medication : medications >
+  Person <|-- Patient
+  Person <|-- Staff
+}
+@enduml

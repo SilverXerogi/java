@@ -1,0 +1,162 @@
+@startuml MinesweeperDomain
+' Диаграмма классов — Сапёр
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 12
+
+package "Core" {
+  interface IRenderer {
+    + render(board: Board): void
+    + renderUI(ui: UIElement): void
+  }
+
+  interface IInput {
+    + readClick(): ClickAction
+  }
+
+  class MinesweeperGame {
+    - board: Board
+    - renderer: IRenderer
+    - input: IInput
+    - scoreManager: ScoreManager
+    - timer: GameTimer
+    - state: GameState
+    - settings: Settings
+    + start(): void
+    + update(): void
+    + handleClick(x:int, y:int, action:ClickAction): void
+    + checkWin(): boolean
+    + endGame(win:boolean): void
+  }
+
+ 
+}
+
+package "Model" {
+  class Board {
+    - width:int
+    - height:int
+    - cells: Cell[][]
+    - minesCount:int
+    + openCell(x:int,y:int): void
+    + toggleFlag(x:int,y:int): void
+    + countAdjacentMines(x:int,y:int): int
+    + allMinesFlagged(): boolean
+  }
+
+  class Cell {
+    - x:int
+    - y:int
+    - isMine:boolean
+    - isOpen:boolean
+    - isFlagged:boolean
+    - adjacentMines:int
+    + reveal(): void
+    + toggleFlag(): void
+  }
+
+  class GameTimer {
+    - startTime: Date
+    - elapsed:int
+    + start(): void
+    + stop(): void
+    + getElapsed(): int
+  }
+}
+
+package "Logic" {
+  class MineGenerator {
+    + generate(board:Board, mines:int, safeX:int, safeY:int): void
+  }
+
+  class CellOpener {
+    + openArea(board:Board, x:int, y:int): void
+  }
+
+  class WinChecker {
+    + isWin(board:Board): boolean
+  }
+
+  class InputManager implements IInput {
+    - lastClick: ClickAction
+    + readClick(): ClickAction
+  }
+}
+
+package "UI" {
+  abstract class UIElement {
+    - x:int
+    - y:int
+    - width:int
+    - height:int
+    + draw(renderer:IRenderer): void
+    + onClick(x:int, y:int): void
+  }
+
+  class Button extends UIElement {
+    - label:String
+    + onClick(x:int,y:int): void
+  }
+
+  class Menu {
+    + showMain(): void
+    + showSettings(): void
+  }
+
+  class Renderer2D implements IRenderer {
+    + render(board: Board): void
+    + renderUI(ui: UIElement): void
+  }
+}
+
+package "Service" {
+  class ScoreManager {
+    - bestTime:int
+    + updateScore(time:int): void
+    + getBestTime(): int
+  }
+
+  class SaveManager {
+    + save(game:MinesweeperGame): void
+    + load(): MinesweeperGame
+  }
+
+  class Settings {
+    - width:int
+    - height:int
+    - mines:int
+    + loadDefaults(): void
+    + apply(): void
+  }
+
+  class SoundManager {
+    + playClick(): void
+    + playExplosion(): void
+    + playWin(): void
+  }
+}
+
+' -----------------------------
+' Отношения и иерархии
+MinesweeperGame *-- Board
+MinesweeperGame o-- ScoreManager
+MinesweeperGame o-- Settings
+MinesweeperGame o-- GameTimer
+MinesweeperGame --> InputManager
+MinesweeperGame --> Renderer2D
+MinesweeperGame --> SoundManager
+MinesweeperGame --> Menu
+
+Board "1" *-- "0..*" Cell
+Board --> MineGenerator
+Board --> WinChecker
+Board --> CellOpener
+
+Renderer2D ..|> IRenderer
+InputManager ..|> IInput
+
+UIElement <|-- Button
+SaveManager ..> MinesweeperGame
+ScoreManager ..> Board
+
+SoundManager ..> MinesweeperGame
+@enduml

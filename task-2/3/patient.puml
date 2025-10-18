@@ -1,8 +1,7 @@
-@startuml PatientDomain
-' Диаграмма классов — Пациент (Clinic domain)
-' Требования: >=4 классов, иерархии, свойства и методы, связи
+@startuml PatientDomainFixed
 
 skinparam classAttributeIconSize 0
+
 package "Clinic Domain" {
   abstract class Person {
     - id: String
@@ -14,29 +13,32 @@ package "Clinic Domain" {
   }
 
   class Patient extends Person {
-    - medicalRecordNumber: String
+    - medicalRecordNumber: String           ' уникальный идентификатор пациента
     - primaryPhysicianId: String
-    - bloodType: String
-    - allergies: List<String>
+    - contacts: List<ContactInfo>
+    - visits: List<Visit>
+    - medications: List<Medication>
+    - medicalProfile: MedicalProfile
     + addAllergy(a: String): void
     + removeAllergy(a: String): void
     + getActiveMedications(): List<Medication>
+    + addVisit(v: Visit): void
+    + addMedication(m: Medication): void
+    + getVisits(): List<Visit>
   }
 
-  class Staff extends Person {
-    - staffId: String
-    - role: StaffRole
-    + assignToPatient(p: Patient): void
-  }
-
-  enum StaffRole {
-    DOCTOR
-    NURSE
-    ADMIN
-    TECH
+  class MedicalProfile {
+    - bloodType: int         
+    - rhFactor: boolean      ' true = Rh+, false = Rh-
+    - allergies: List<String>
+    - chronicConditions: List<String>
+    + addAllergy(a: String): void
+    + hasAllergy(a: String): boolean
   }
 
   class ContactInfo {
+    - id: String
+    - patientId: String      ' ссылка на владельца
     - phone: String
     - email: String
     - address: Address
@@ -54,35 +56,62 @@ package "Clinic Domain" {
 
   class Visit {
     - visitId: String
+    - patientId: String      ' явная ссылка на пациента
+    - performedByStaffId: String
     - date: DateTime
     - reason: String
     - notes: String
     + addNote(note: String): void
     + closeVisit(): void
+    + getDiagnoses(): List<Diagnosis>
   }
 
   class Medication {
     - medId: String
+    - patientId: String       ' явная связь с пациентом
     - name: String
     - dosage: String
     - startDate: Date
     - endDate: Date
-    + isActive(today: Date): boolean
+    + isActive(onDate: Date): boolean
+    + discontinue(date: Date): void
   }
 
   class Diagnosis {
+    - diagId: String
+    - patientId: String
     - code: String
     - description: String
-    + isChronic(): boolean
+    - isChronic: boolean
+    + markChronic(): void
   }
 
-  ' связи
-  Patient "1" *-- "0..1" ContactInfo : contact >
+  class Staff extends Person {
+    - staffId: String
+    - role: StaffRole
+    - canDiagnose: boolean
+    - canTreat: boolean
+    + assignToPatient(p: Patient): void
+    + addDiagnosis(p: Patient, d: Diagnosis): void
+    + attendVisit(v: Visit): void
+  }
+
+  enum StaffRole {
+    DOCTOR
+    NURSE
+    ADMIN
+    TECH
+  }
+
+
+  Patient "1" *-- "0..*" ContactInfo : contacts >
   ContactInfo o-- Address
   Patient "1" -- "0..*" Visit : visits >
   Visit "0..*" o-- "0..*" Staff : attendedBy >
   Visit "0..*" -- "0..*" Diagnosis : diagnoses >
   Patient "1" o-- "0..*" Medication : medications >
+  Diagnosis "1" -- "1" Patient : patient >
+  Medication "1" -- "1" Patient : patient >
   Person <|-- Patient
   Person <|-- Staff
 }

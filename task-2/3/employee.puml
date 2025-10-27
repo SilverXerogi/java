@@ -1,0 +1,102 @@
+@startuml EmployeeDomain
+' Employee domain — диаграмма классов для отдела кадров
+' Сохранить как task-3/employee.puml
+
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 12
+
+package "HR Management System" {
+  ' --------------------------
+  ' Основная сущность Employee
+  ' --------------------------
+  class Employee {
+    - employeeId: String
+    - firstName: String
+    - lastName: String
+    - birthDate: Date
+    - hireDate: Date
+    - position: String
+    - department: Department
+    - salary: double
+    - contact: ContactInfo
+    + getFullName(): String
+    + getExperienceYears(): int
+    + changeDepartment(d: Department): void
+    + promote(newPosition: String, raise: double): void
+  }
+
+  ' --------------------------
+  ' Department — отдел компании
+  ' --------------------------
+  class Department {
+    - deptId: String
+    - name: String
+    - managerId: String
+    - employees: List<Employee>
+    + addEmployee(e: Employee): void
+    + removeEmployee(e: Employee): void
+    + getHead(): Employee
+  }
+
+  ' --------------------------
+  ' ContactInfo — контактные данные
+  ' --------------------------
+  class ContactInfo {
+    - phone: String
+    - email: String
+    - address: Address
+    + validate(): boolean
+  }
+
+  class Address {
+    - street: String
+    - city: String
+    - postalCode: String
+    - country: String
+    + toString(): String
+  }
+
+  ' --------------------------
+  ' Payroll — расчет зарплаты
+  ' --------------------------
+  class Payroll {
+    - payrollId: String
+    - employeeId: String
+    - baseSalary: double
+    - bonus: double
+    - deductions: double
+    + calculateTotal(): double
+    + generatePayslip(): Payslip
+  }
+
+  class Payslip {
+    - payslipId: String
+    - employeeId: String
+    - dateIssued: Date
+    - totalAmount: double
+    - details: String
+  }
+
+  ' --------------------------
+  ' PerformanceReview — аттестация
+  ' --------------------------
+  class PerformanceReview {
+    - reviewId: String
+    - employeeId: String
+    - date: Date
+    - reviewer: String
+    - score: int
+    - comments: String
+    + summarize(): String
+  }
+
+  ' --------------------------
+  ' Связи между сущностями
+  ' --------------------------
+  Employee "1" -- "1" ContactInfo
+  ContactInfo o-- Address
+  Department "1" *-- "0..*" Employee
+  Employee "1" -- "0..*" Payroll
+  Employee "1" -- "0..*" PerformanceReview
+}
+@enduml

@@ -1,3 +1,5 @@
+package model;
+
 import java.time.LocalDate;
 
 public class Book {
@@ -44,7 +46,7 @@ public class Book {
 
     @Override
     public String toString() {
-        return "Book{" +
+        return "model.Book{" +
                 "id='" + id + '\'' +
                 ", title='" + title + '\'' +
                 ", status=" + status +

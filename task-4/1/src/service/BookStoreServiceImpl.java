@@ -1,3 +1,10 @@
+package service;
+
+import model.Book;
+import model.BookRequest;
+import model.Inventory;
+import model.Order;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,7 +20,6 @@ public class BookStoreServiceImpl implements BookStoreService {
     }
 
     // ------------------- Заказы -------------------
-    @Override
     public Order createOrder(Map<String, Integer> items) {
         Order order = new Order(items, "Default Customer");
         orders.put(order.getId(), order);
@@ -44,13 +50,11 @@ public class BookStoreServiceImpl implements BookStoreService {
         return r;
     }
 
-    @Override
     public void cancelOrder(String orderId) {
         Order o = orders.get(orderId);
         if (o != null) o.setStatus(Order.Status.CANCELED);
     }
 
-    @Override
     public void changeOrderStatus(String orderId, Order.Status status) {
         Order o = orders.get(orderId);
         if (o == null) return;
@@ -71,7 +75,6 @@ public class BookStoreServiceImpl implements BookStoreService {
     }
 
     // ------------------- Книги -------------------
-    @Override
     public void addBookToInventory(String bookId, int qty) {
         Book book = inventory.getBook(bookId);
         if (book == null) return;
@@ -86,59 +89,49 @@ public class BookStoreServiceImpl implements BookStoreService {
         }
     }
 
-    @Override
     public BookRequest requestBook(String bookId) {
         return createRequestIfAbsent(bookId);
     }
 
-    @Override
     public void writeOffBook(String bookId) {
         Book book = inventory.getBook(bookId);
         if (book != null) inventory.writeOff(bookId);
     }
 
     // ------------------- Сортировка книг -------------------
-    @Override
     public List<Book> listBooksSortedByTitle() {
         return inventory.listBooksByTitle();
     }
 
-    @Override
     public List<Book> listBooksSortedByPrice() {
         return inventory.listBooksByPrice();
     }
 
-    @Override
     public List<Book> listBooksSortedByDate() {
         return inventory.listBooksByArrivalDate();
     }
 
-    @Override
     public List<Book> listBooksSortedByAvailability() {
         return inventory.listBooksByAvailability();
     }
 
-    @Override
     public List<Book> listStaleBooks(int months) {
         return inventory.listStaleBooks(months);
     }
 
     // ------------------- Сортировка заказов -------------------
-    @Override
     public List<Order> listOrdersSortedByDate() {
         return orders.values().stream()
                 .sorted(Comparator.comparing(o -> orderDates.get(o.getId())))
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<Order> listOrdersSortedByPrice() {
         return orders.values().stream()
                 .sorted(Comparator.comparingDouble(Order::getTotalPrice))
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<Order> listOrdersSortedByStatus() {
         return orders.values().stream()
                 .sorted(Comparator.comparing(Order::getStatus))
@@ -146,14 +139,12 @@ public class BookStoreServiceImpl implements BookStoreService {
     }
 
     // ------------------- Сортировка запросов -------------------
-    @Override
     public List<BookRequest> listRequestsSortedByTitle() {
         return requests.values().stream()
                 .sorted(Comparator.comparing(r -> inventory.getBook(r.getBookId()).getTitle()))
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<BookRequest> listRequestsSortedByRequestCount() {
         return requests.values().stream()
                 .sorted(Comparator.comparingInt(BookRequest::getRequestCount).reversed())
@@ -161,7 +152,6 @@ public class BookStoreServiceImpl implements BookStoreService {
     }
 
     // ------------------- Отчёты по заказам -------------------
-    @Override
     public List<Order> listCompletedOrdersInPeriod(Date from, Date to) {
         return orders.values().stream()
                 .filter(o -> o.getStatus() == Order.Status.COMPLETED)
@@ -172,7 +162,6 @@ public class BookStoreServiceImpl implements BookStoreService {
                 .collect(Collectors.toList());
     }
 
-    @Override
     public double getRevenueInPeriod(Date from, Date to) {
         // Для примера считаем сумму заказов по цене книг
         return listCompletedOrdersInPeriod(from, to).stream()
@@ -181,18 +170,15 @@ public class BookStoreServiceImpl implements BookStoreService {
                 .sum();
     }
 
-    @Override
     public int getCompletedOrdersCountInPeriod(Date from, Date to) {
         return listCompletedOrdersInPeriod(from, to).size();
     }
 
     // ------------------- Детали -------------------
-    @Override
     public Order getOrderDetails(String orderId) {
         return orders.get(orderId);
     }
 
-    @Override
     public Book getBookDetails(String bookId) {
         return inventory.getBook(bookId);
     }

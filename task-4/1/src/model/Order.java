@@ -1,3 +1,5 @@
+package model;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,7 +54,7 @@ public class Order {
 
     @Override
     public String toString() {
-        return "Order{" +
+        return "model.Order{" +
                 "id='" + id + '\'' +
                 ", customer='" + customerName + '\'' +
                 ", items=" + items +

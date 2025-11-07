@@ -1,3 +1,5 @@
+package model;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -39,7 +41,7 @@ public class BookRequest {
 
     @Override
     public String toString() {
-        return "BookRequest{" +
+        return "model.BookRequest{" +
                 "id='" + id + '\'' +
                 ", bookId='" + bookId + '\'' +
                 ", status=" + status +

@@ -1,9 +1,11 @@
+package model;
+
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Inventory {
-    private final Map<String, Book> catalog = new HashMap<>();     // bookId -> Book
+    private final Map<String, Book> catalog = new HashMap<>();     // bookId -> model.Book
     private final Map<String, Integer> stock = new HashMap<>();    // bookId -> quantity
     private final Map<String, LocalDate> arrivalDates = new HashMap<>(); // bookId -> дата поступления
     private final Map<String, Double> prices = new HashMap<>();    // bookId -> цена
@@ -22,7 +24,7 @@ public class Inventory {
             book.setStatus(Book.Status.ABSENT);
         }
 
-        System.out.println("[Inventory] Зарегистрирована книга: " + book + ", qty=" + initialQty + ", price=" + price);
+        System.out.println("[model.Inventory] Зарегистрирована книга: " + book + ", qty=" + initialQty + ", price=" + price);
     }
     public Map<String, Book> getCatalogMap() {
         return new HashMap<>(catalog);
@@ -54,7 +56,7 @@ public class Inventory {
         arrivalDates.put(bookId, LocalDate.now()); // обновляем дату поступления
         catalog.get(bookId).setStatus(Book.Status.AVAILABLE);
 
-        System.out.println("[Inventory] Добавлено на склад: " + bookId + ", qty=" + qty + " (новое количество=" + (cur + qty) + ")");
+        System.out.println("[model.Inventory] Добавлено на склад: " + bookId + ", qty=" + qty + " (новое количество=" + (cur + qty) + ")");
     }
 
     // Списание со склада
@@ -69,7 +71,7 @@ public class Inventory {
         }
 
         lastSoldDate.put(bookId, LocalDate.now()); // фиксируем дату продажи
-        System.out.println("[Inventory] Списание со склада: " + bookId + ", qty=" + qty + " (остаток=" + rem + ")");
+        System.out.println("[model.Inventory] Списание со склада: " + bookId + ", qty=" + qty + " (остаток=" + rem + ")");
     }
 
     // Списание (перевод в отсутствует)
@@ -77,7 +79,7 @@ public class Inventory {
         stock.put(bookId, 0);
         Book b = catalog.get(bookId);
         if (b != null) b.setStatus(Book.Status.ABSENT);
-        System.out.println("[Inventory] Книга списана: " + bookId);
+        System.out.println("[model.Inventory] Книга списана: " + bookId);
     }
 
     // =================== ВЫБОРКИ / АНАЛИТИКА ===================

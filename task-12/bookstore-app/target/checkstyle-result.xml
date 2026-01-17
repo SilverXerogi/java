@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="9.3">
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\config\ConfigProperty.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\config\ConfigType.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\config\Configurator.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\dao\BookDAO.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\dao\BookRequestDAO.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\dao\GenericDAO.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\dao\OrderDAO.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\di\BeanContainer.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\di\Inject.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\jdbc\ConnectionManager.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\jdbc\TransactionalExecutor.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\Main.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\Book.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\BookRequest.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\BookStoreService.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\BookStoreServiceImpl.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\factory\BookFactory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\factory\BookRequestFactory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\factory\DefaultBookStoreFactory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\factory\OrderFactory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\Inventory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\io\BookCSVHandler.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\io\BookRequestCSVHandler.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\io\OrderCSVHandler.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\Order.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\persistence\AppState.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\persistence\StateSerializer.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\service\BookService.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\service\OrderService.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\model\service\RequestService.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\Builder.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\IAction.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\Menu.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\MenuController.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\MenuFactory.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\MenuItem.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\MenuType.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\ui\Navigator.java">
+</file>
+<file name="C:\Users\maksi\OneDrive\Desktop\4curs\java\javacurs\task-12\bookstore-app\src\main\java\bookstore\jdbc\jdbc.properties">
+</file>
+</checkstyle>

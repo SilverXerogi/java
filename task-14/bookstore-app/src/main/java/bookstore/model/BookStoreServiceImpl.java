@@ -3,8 +3,15 @@ package bookstore.model;
 import bookstore.dao.BookDAO;
 import bookstore.dao.BookRequestDAO;
 import bookstore.dao.OrderDAO;
-import bookstore.jdbc.TransactionalExecutor;
+import bookstore.entity.BookEntity;
+import bookstore.entity.BookRequestEntity;
+import bookstore.entity.OrderEntity;
+import bookstore.model.service.BookService;
+import bookstore.model.service.OrderService;
+import bookstore.model.service.RequestService;
 import bookstore.model.factory.DefaultBookStoreFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -13,91 +20,101 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Service
 public class BookStoreServiceImpl implements BookStoreService {
 
-    private final Inventory inventory;
-    private final DefaultBookStoreFactory factory;
-
-    // DAO-объекты
-    private final BookDAO bookDAO = new BookDAO();
-    private final OrderDAO orderDAO = new OrderDAO();
-    private final BookRequestDAO requestDAO = new BookRequestDAO();
-
-    public BookStoreServiceImpl(Inventory inventory, DefaultBookStoreFactory factory) {
-        this.inventory = inventory;
-        this.factory = factory;
-    }
+    @Autowired
+    private BookDAO bookDAO;
+    @Autowired
+    private OrderDAO orderDAO;
+    @Autowired
+    private BookRequestDAO requestDAO;
+    @Autowired
+    private Inventory inventory;
+    @Autowired
+    private DefaultBookStoreFactory factory;
 
     // --- BookService ---
 
     @Override
     public void addBookToInventory(int bookId, int qty) {
-        TransactionalExecutor.executeInTransaction(conn -> {
-            Book book = bookDAO.findById(bookId);
-            if (book == null) return null;
+        BookEntity book = bookDAO.findById(bookId);
+        if (book == null) return;
 
-            inventory.addStock(bookId, qty);
+        inventory.addStock(bookId, qty);
 
-            if (inventory.isAutoCloseRequestsOnStockAdd()) {
-                List<BookRequest> openRequests = requestDAO.findAll().stream()
-                        .filter(r -> r.getBookId() == bookId && r.getStatus() == BookRequest.Status.OPEN)
-                        .toList();
-                for (BookRequest r : openRequests) {
-                    r.close();
-                    requestDAO.update(r);
-                }
+        if (inventory.isAutoCloseRequestsOnStockAdd()) {
+            List<BookRequestEntity> openRequests = requestDAO.findAll().stream()
+                    .filter(r -> r.getBookId() == bookId && r.getStatus() == BookRequestEntity.Status.OPEN)
+                    .toList();
+            for (BookRequestEntity r : openRequests) {
+                r.close();
+                requestDAO.update(r);
             }
-
-            return null;
-        });
+        }
     }
 
     @Override
     public void writeOffBook(int bookId) {
-        Book book = bookDAO.findById(bookId);
+        BookEntity book = bookDAO.findById(bookId);
         if (book != null) inventory.writeOff(bookId);
     }
 
     @Override
     public BookRequest requestBook(int bookId) {
-        BookRequest request = new BookRequest(0, bookId, BookRequest.Status.OPEN, 1, java.time.LocalDateTime.now());
-        return requestDAO.save(request);
+        BookRequestEntity request = new BookRequestEntity(bookId, 1);
+        BookRequestEntity saved = requestDAO.save(request);
+
+        // Convert Entity to Model
+        BookRequest.Status status = BookRequest.Status.valueOf(saved.getStatus().name());
+        return new BookRequest(saved.getId(), saved.getBookId(), status, saved.getRequestCount(), saved.getCreatedAt());
     }
 
     @Override
     public Book getBookDetails(int bookId) {
-        return bookDAO.findById(bookId);
+        BookEntity entity = bookDAO.findById(bookId);
+        if (entity == null) return null;
+
+        // Convert Entity to Model
+        Book.Status status = Book.Status.valueOf(entity.getStatus().name());
+        Book model = new Book(entity.getId(), entity.getTitle(), status, entity.getPrice(), entity.getPublicationDate(), entity.getDescription());
+        model.setArrivalDate(entity.getArrivalDate());
+        return model;
     }
 
     @Override
     public List<Book> getBooksSortedByTitle() {
         return bookDAO.findAll().stream()
-                .filter(b -> b.getStatus() == Book.Status.AVAILABLE)
-                .sorted(Comparator.comparing(Book::getTitle))
+                .filter(b -> b.getStatus().name().equals(Book.Status.AVAILABLE.name()))
+                .sorted(Comparator.comparing(BookEntity::getTitle))
+                .map(this::convertToBookModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Book> getBooksSortedByPrice() {
         return bookDAO.findAll().stream()
-                .filter(b -> b.getStatus() == Book.Status.AVAILABLE)
-                .sorted(Comparator.comparingDouble(Book::getPrice))
+                .filter(b -> b.getStatus().name().equals(Book.Status.AVAILABLE.name()))
+                .sorted(Comparator.comparingDouble(BookEntity::getPrice))
+                .map(this::convertToBookModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Book> getBooksSortedByDate() {
         return bookDAO.findAll().stream()
-                .filter(b -> b.getStatus() == Book.Status.AVAILABLE)
-                .sorted(Comparator.comparing(Book::getArrivalDate))
+                .filter(b -> b.getStatus().name().equals(Book.Status.AVAILABLE.name()))
+                .sorted(Comparator.comparing(BookEntity::getArrivalDate))
+                .map(this::convertToBookModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Book> getBooksSortedByAvailability() {
         return bookDAO.findAll().stream()
-                .filter(b -> b.getStatus() == Book.Status.AVAILABLE)
-                .sorted(Comparator.comparing(Book::getStatus))
+                .filter(b -> b.getStatus().name().equals(Book.Status.AVAILABLE.name()))
+                .sorted(Comparator.comparing(BookEntity::getStatus))
+                .map(this::convertToBookModel)
                 .collect(Collectors.toList());
     }
 
@@ -110,102 +127,115 @@ public class BookStoreServiceImpl implements BookStoreService {
 
     @Override
     public Order createOrder(Map<Integer, Integer> items, String customerName) {
-        return TransactionalExecutor.executeInTransaction(conn -> {
-            Order order = factory.createNewOrder(items, customerName);
-            order.recalculateTotal(inventory);
-            Order saved = orderDAO.save(order);
+        OrderEntity order = new OrderEntity(customerName, items);
+        OrderEntity saved = orderDAO.save(order);
 
-            // Проверяем отсутствие книг — создаём заявки
-            items.keySet().forEach(bookId -> {
-                Book book = inventory.getBook(bookId);
-                if (book == null || book.getStatus() == Book.Status.ABSENT) {
-                    createRequestIfAbsent(bookId);
-                }
-            });
+        // Convert Entity to Model
+        Order modelOrder = new Order(saved.getId(), saved.getItems(), saved.getCustomerName(), saved.getCreatedAt());
+        modelOrder.setStatus(Order.Status.valueOf(saved.getStatus().name()));
+        modelOrder.setTotalPrice(saved.getTotalPrice());
+        if (saved.getClosedAt() != null) modelOrder.setClosedAt(saved.getClosedAt());
 
-            return saved;
+        // Проверяем отсутствие книг — создаём заявки
+        items.keySet().forEach(bookId -> {
+            Book book = inventory.getBook(bookId);
+            if (book == null || book.getStatus() == Book.Status.ABSENT) {
+                createRequestIfAbsent(bookId);
+            }
         });
+
+        return modelOrder;
     }
 
     @Override
     public Map<Integer, Order> getAllOrders() {
-        List<Order> orders = orderDAO.findAll();
+        List<OrderEntity> entities = orderDAO.findAll();
         Map<Integer, Order> map = new HashMap<>();
-        for (Order o : orders) {
-            map.put(o.getId(), o);
+        for (OrderEntity e : entities) {
+            Order model = new Order(e.getId(), e.getItems(), e.getCustomerName(), e.getCreatedAt());
+            model.setStatus(Order.Status.valueOf(e.getStatus().name()));
+            model.setTotalPrice(e.getTotalPrice());
+            if (e.getClosedAt() != null) model.setClosedAt(e.getClosedAt());
+            map.put(model.getId(), model);
         }
         return map;
     }
 
     @Override
     public void cancelOrder(int orderId) {
-        TransactionalExecutor.executeInTransaction(conn -> {
-            Order order = orderDAO.findById(orderId);
-            if (order != null) {
-                order.setStatus(Order.Status.CANCELLED);
-                orderDAO.update(order);
-            }
-            return null;
-        });
+        OrderEntity order = orderDAO.findById(orderId);
+        if (order != null) {
+            order.setStatus(OrderEntity.Status.CANCELLED);
+            orderDAO.update(order);
+        }
     }
 
     @Override
     public void changeOrderStatus(int orderId, Order.Status status) {
-        TransactionalExecutor.executeInTransaction(conn -> {
-            Order o = orderDAO.findById(orderId);
-            if (o == null) return null;
+        OrderEntity o = orderDAO.findById(orderId);
+        if (o == null) return;
 
-            if (status == Order.Status.COMPLETED) {
-                boolean allAvailable = o.getItems().entrySet().stream().allMatch(e ->
-                        inventory.getBook(e.getKey()) != null &&
-                                inventory.getBook(e.getKey()).getStatus() == Book.Status.AVAILABLE &&
-                                inventory.getQuantity(e.getKey()) >= e.getValue()
-                );
-                if (!allAvailable) throw new RuntimeException("Не все книги доступны для завершения заказа");
+        if (status == Order.Status.COMPLETED) {
+            boolean allAvailable = o.getItems().entrySet().stream().allMatch(e ->
+                    inventory.getBook(e.getKey()) != null &&
+                            inventory.getBook(e.getKey()).getStatus() == Book.Status.AVAILABLE &&
+                            inventory.getQuantity(e.getKey()) >= e.getValue()
+            );
+            if (!allAvailable) throw new RuntimeException("Не все книги доступны для завершения заказа");
 
-                o.getItems().forEach((id, qty) -> inventory.reduceStock(id, qty));
-            }
-            o.setStatus(status);
-            orderDAO.update(o);
-            return null;
-        });
+            o.getItems().forEach((id, qty) -> inventory.reduceStock(id, qty));
+        }
+        o.setStatus(OrderEntity.Status.valueOf(status.name()));
+        orderDAO.update(o);
     }
 
     @Override
     public Order getOrderDetails(int orderId) {
-        return orderDAO.findById(orderId);
+        OrderEntity entity = orderDAO.findById(orderId);
+        if (entity == null) return null;
+
+        // Convert Entity to Model
+        Order model = new Order(entity.getId(), entity.getItems(), entity.getCustomerName(), entity.getCreatedAt());
+        model.setStatus(Order.Status.valueOf(entity.getStatus().name()));
+        model.setTotalPrice(entity.getTotalPrice());
+        if (entity.getClosedAt() != null) model.setClosedAt(entity.getClosedAt());
+        return model;
     }
 
     @Override
     public List<Order> getOrdersSortedByDate() {
         return orderDAO.findAll().stream()
-                .sorted(Comparator.comparing(Order::getCreatedAt))
+                .sorted(Comparator.comparing(OrderEntity::getCreatedAt))
+                .map(this::convertToOrderModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> getOrdersSortedByPrice() {
         return orderDAO.findAll().stream()
-                .sorted(Comparator.comparingDouble(Order::getTotalPrice))
+                .sorted(Comparator.comparingDouble(OrderEntity::getTotalPrice))
+                .map(this::convertToOrderModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> getOrdersSortedByStatus() {
         return orderDAO.findAll().stream()
-                .sorted(Comparator.comparing(Order::getStatus))
+                .sorted(Comparator.comparing(OrderEntity::getStatus))
+                .map(this::convertToOrderModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> getCompletedOrdersInPeriod(LocalDate from, LocalDate to) {
         return orderDAO.findAll().stream()
-                .filter(o -> o.getStatus() == Order.Status.COMPLETED)
+                .filter(o -> o.getStatus() == OrderEntity.Status.COMPLETED)
                 .filter(o -> {
                     LocalDate date = o.getCreatedAt().toLocalDate();
                     return (date.isAfter(from) || date.isEqual(from)) &&
                             (date.isBefore(to) || date.isEqual(to));
                 })
+                .map(this::convertToOrderModel)
                 .collect(Collectors.toList());
     }
 
@@ -228,30 +258,55 @@ public class BookStoreServiceImpl implements BookStoreService {
     public List<BookRequest> getRequestsSortedByTitle() {
         return requestDAO.findAll().stream()
                 .sorted(Comparator.comparing(r -> {
-                    Book book = bookDAO.findById(r.getBookId());
+                    BookEntity book = bookDAO.findById(r.getBookId());
                     return book != null ? book.getTitle() : "";
                 }))
+                .map(this::convertToBookRequestModel)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<BookRequest> getRequestsSortedByRequestCount() {
         return requestDAO.findAll().stream()
-                .sorted(Comparator.comparingInt(BookRequest::getRequestCount).reversed())
+                .sorted(Comparator.comparingInt(BookRequestEntity::getRequestCount).reversed())
+                .map(this::convertToBookRequestModel)
                 .collect(Collectors.toList());
     }
 
     public Map<Integer, BookRequest> getAllRequests() {
-        List<BookRequest> requests = requestDAO.findAll();
+        List<BookRequestEntity> entities = requestDAO.findAll();
         Map<Integer, BookRequest> map = new HashMap<>();
-        for (BookRequest r : requests) {
-            map.put(r.getId(), r);
+        for (BookRequestEntity e : entities) {
+            BookRequest model = convertToBookRequestModel(e);
+            map.put(model.getId(), model);
         }
         return map;
     }
 
-    private BookRequest createRequestIfAbsent(int bookId) {
-        BookRequest request = new BookRequest(0, bookId, BookRequest.Status.OPEN, 1, java.time.LocalDateTime.now());
+    private BookRequestEntity createRequestIfAbsent(int bookId) {
+        BookRequestEntity request = new BookRequestEntity(bookId, 1);
         return requestDAO.save(request);
+    }
+
+    // --- Helper Methods ---
+
+    private Book convertToBookModel(BookEntity entity) {
+        Book.Status status = Book.Status.valueOf(entity.getStatus().name());
+        Book model = new Book(entity.getId(), entity.getTitle(), status, entity.getPrice(), entity.getPublicationDate(), entity.getDescription());
+        model.setArrivalDate(entity.getArrivalDate());
+        return model;
+    }
+
+    private Order convertToOrderModel(OrderEntity entity) {
+        Order model = new Order(entity.getId(), entity.getItems(), entity.getCustomerName(), entity.getCreatedAt());
+        model.setStatus(Order.Status.valueOf(entity.getStatus().name()));
+        model.setTotalPrice(entity.getTotalPrice());
+        if (entity.getClosedAt() != null) model.setClosedAt(entity.getClosedAt());
+        return model;
+    }
+
+    private BookRequest convertToBookRequestModel(BookRequestEntity entity) {
+        BookRequest.Status status = BookRequest.Status.valueOf(entity.getStatus().name());
+        return new BookRequest(entity.getId(), entity.getBookId(), status, entity.getRequestCount(), entity.getCreatedAt());
     }
 }

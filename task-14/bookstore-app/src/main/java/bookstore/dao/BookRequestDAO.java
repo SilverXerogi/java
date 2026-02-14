@@ -4,16 +4,16 @@ import bookstore.entity.BookRequestEntity;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public class BookRequestDAO implements GenericDAO<BookRequestEntity, Integer> {
-    private final SessionFactory sessionFactory;
 
-    public BookRequestDAO(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
+    @Autowired
+    private SessionFactory sessionFactory;
 
     @Override
     public BookRequestEntity findById(Integer id) {

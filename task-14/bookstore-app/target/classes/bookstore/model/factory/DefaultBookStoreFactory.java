@@ -1,7 +1,5 @@
 package bookstore.model.factory;
 
-
-
 import bookstore.model.Book;
 import bookstore.model.BookRequest;
 import bookstore.model.Order;
@@ -10,6 +8,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class DefaultBookStoreFactory {
 
     private final BookFactory bookFactory = new BookFactory();

@@ -1,87 +1,62 @@
 package bookstore.dao;
 
-import bookstore.jdbc.ConnectionManager;
-import bookstore.model.Book;
+import bookstore.entity.BookEntity;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDate;
-import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-public class BookDAO implements GenericDAO<Book, Integer> {
+@Repository
+public class BookDAO implements GenericDAO<BookEntity, Integer> {
+
+    @Autowired
+    private SessionFactory sessionFactory;
 
     @Override
-    public Book findById(Integer id) {
-        String sql = "SELECT * FROM books WHERE id = ?";
-        try (Connection conn = ConnectionManager.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return mapRowToBook(rs);
-            }
-        } catch (SQLException e) {
+    public BookEntity findById(Integer id) {
+        try (Session session = sessionFactory.openSession()) {
+            return session.get(BookEntity.class, id);
+        } catch (Exception e) {
             throw new RuntimeException("Ошибка при поиске книги", e);
         }
-        return null;
     }
 
     @Override
-    public List<Book> findAll() {
-        String sql = "SELECT * FROM books";
-        List<Book> books = new ArrayList<>();
-        try (Connection conn = ConnectionManager.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                books.add(mapRowToBook(rs));
-            }
-        } catch (SQLException e) {
+    public List<BookEntity> findAll() {
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("FROM BookEntity", BookEntity.class).list();
+        } catch (Exception e) {
             throw new RuntimeException("Ошибка при получении всех книг", e);
         }
-        return books;
     }
 
     @Override
-    public Book save(Book book) {
-        String sql = "INSERT INTO books (title, status, price, publication_date, arrival_date, description) VALUES (?, ?, ?, ?, ?, ?) RETURNING id";
-        try (Connection conn = ConnectionManager.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, book.getTitle());
-            stmt.setString(2, book.getStatus().name());
-            stmt.setBigDecimal(3, java.math.BigDecimal.valueOf(book.getPrice()));
-            stmt.setDate(4, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
-            stmt.setDate(5, book.getArrivalDate() != null ? Date.valueOf(book.getArrivalDate()) : null);
-            stmt.setString(6, book.getDescription());
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                book.setId(rs.getInt("id"));
-            }
-        } catch (SQLException e) {
+    public BookEntity save(BookEntity book) {
+        Transaction tx = null;
+        try (Session session = sessionFactory.openSession()) {
+            tx = session.beginTransaction();
+            session.persist(book);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
             throw new RuntimeException("Ошибка при сохранении книги", e);
         }
         return book;
     }
 
     @Override
-    public Book update(Book book) {
-        String sql = "UPDATE books SET title = ?, status = ?, price = ?, publication_date = ?, arrival_date = ?, description = ? WHERE id = ?";
-        try (Connection conn = ConnectionManager.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, book.getTitle());
-            stmt.setString(2, book.getStatus().name());
-            stmt.setBigDecimal(3, java.math.BigDecimal.valueOf(book.getPrice()));
-            stmt.setDate(4, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
-            stmt.setDate(5, book.getArrivalDate() != null ? Date.valueOf(book.getArrivalDate()) : null);
-            stmt.setString(6, book.getDescription());
-            stmt.setInt(7, book.getId());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+    public BookEntity update(BookEntity book) {
+        Transaction tx = null;
+        try (Session session = sessionFactory.openSession()) {
+            tx = session.beginTransaction();
+            session.merge(book);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
             throw new RuntimeException("Ошибка при обновлении книги", e);
         }
         return book;
@@ -89,26 +64,17 @@ public class BookDAO implements GenericDAO<Book, Integer> {
 
     @Override
     public void delete(Integer id) {
-        String sql = "DELETE FROM books WHERE id = ?";
-        try (Connection conn = ConnectionManager.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+        Transaction tx = null;
+        try (Session session = sessionFactory.openSession()) {
+            tx = session.beginTransaction();
+            BookEntity book = session.get(BookEntity.class, id);
+            if (book != null) {
+                session.remove(book);
+            }
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
             throw new RuntimeException("Ошибка при удалении книги", e);
         }
-    }
-
-    private Book mapRowToBook(ResultSet rs) throws SQLException {
-        Book book = new Book(
-                rs.getInt("id"),
-                rs.getString("title"),
-                Book.Status.valueOf(rs.getString("status")),
-                rs.getBigDecimal("price").doubleValue(),
-                rs.getDate("publication_date") != null ? rs.getDate("publication_date").toLocalDate() : null,
-                rs.getString("description")
-        );
-        book.setArrivalDate(rs.getDate("arrival_date") != null ? rs.getDate("arrival_date").toLocalDate() : LocalDate.now());
-        return book;
     }
 }

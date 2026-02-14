@@ -6,9 +6,7 @@ import bookstore.dao.OrderDAO;
 import bookstore.entity.BookEntity;
 import bookstore.entity.BookRequestEntity;
 import bookstore.entity.OrderEntity;
-import bookstore.model.service.BookService;
-import bookstore.model.service.OrderService;
-import bookstore.model.service.RequestService;
+
 import bookstore.model.factory.DefaultBookStoreFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,7 +51,9 @@ public class BookStoreServiceImpl implements BookStoreService {
             }
         }
     }
-
+    public Inventory getInventory() {
+        return inventory;
+    }
     @Override
     public void writeOffBook(int bookId) {
         BookEntity book = bookDAO.findById(bookId);

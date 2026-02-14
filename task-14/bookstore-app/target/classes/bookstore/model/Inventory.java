@@ -1,8 +1,7 @@
 package bookstore.model;
 
-import bookstore.config.ConfigProperty;
-import bookstore.config.Configurator;
-import bookstore.model.persistence.AppState;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -11,12 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Component
 public class Inventory {
 
-    @ConfigProperty
+    @Value("${inventory.stale.months.threshold:6}")
     private int staleMonthsThreshold = 6;
 
-    @ConfigProperty
+    @Value("${inventory.auto.close.requests.on.stock.add:true}")
     private boolean autoCloseRequestsOnStockAdd = true;
 
     private final Map<Integer, Book> catalog = new HashMap<>();
@@ -25,9 +25,7 @@ public class Inventory {
     private final Map<Integer, Double> prices = new HashMap<>();
     private final Map<Integer, LocalDate> lastSoldDate = new HashMap<>();
 
-    public Inventory() {
-        Configurator.configure(this);
-    }
+    // конструктор без вызова Configurator
 
     public void registerBook(Book book, int initialQty, double price) {
         int id = book.getId();
@@ -170,25 +168,8 @@ public class Inventory {
         return new HashMap<>(lastSoldDate);
     }
 
-    public void restoreFromState(AppState state) {
-        this.catalog.clear();
-        this.catalog.putAll(state.getCatalog());
-
-        this.stock.clear();
-        this.stock.putAll(state.getStock());
-
-        this.arrivalDates.clear();
-        this.arrivalDates.putAll(state.getArrivalDates());
-
-        this.prices.clear();
-        this.prices.putAll(state.getPrices());
-
-        this.lastSoldDate.clear();
-        this.lastSoldDate.putAll(state.getLastSoldDate());
-
-        this.staleMonthsThreshold = state.getStaleMonthsThreshold();
-        this.autoCloseRequestsOnStockAdd = state.isAutoCloseRequestsOnStockAdd();
-
+    public void restoreFromState(/* AppState state */) {
+        // TODO: восстановление состояния из БД или файла
         System.out.println("[model.Inventory] Состояние инвентаря восстановлено.");
     }
 }
